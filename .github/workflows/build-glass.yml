@@ -26,7 +26,7 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
 
       # The runner has no debug keystore, and the build signs the release APK with it unless
       # signing.properties exists. A key from the DEBUG_KEYSTORE_B64 secret is used if you set
