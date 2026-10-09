@@ -28,6 +28,26 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      # The runner has no debug keystore, and the build signs the release APK with it unless
+      # signing.properties exists. A key from the DEBUG_KEYSTORE_B64 secret is used if you set
+      # one (so every build has the same signature and updates install over each other);
+      # otherwise a fresh key is made for this run.
+      - name: Prepare signing key
+        env:
+          DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
+        run: |
+          for D in "$HOME/.android" "$HOME/.config/.android"; do
+            mkdir -p "$D"
+            if [ -n "$DEBUG_KEYSTORE_B64" ]; then
+              echo "$DEBUG_KEYSTORE_B64" | base64 -d > "$D/debug.keystore"
+            else
+              rm -f "$D/debug.keystore"
+              keytool -genkeypair -keystore "$D/debug.keystore" -storepass android -keypass android \
+                -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
+                -dname "CN=Android Debug,O=Android,C=US"
+            fi
+          done
+
       - name: Build release APK
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null || true
